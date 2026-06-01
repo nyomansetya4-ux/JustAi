@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyoman AI - Asisten Virtual Bali</title>
+    
+    <!-- Tailwind and FontAwesome -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Markdown and Purify -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.3/purify.min.js"></script>
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .prose p { margin-top: 0.4em; margin-bottom: 0.4em; }
+        .prose pre { background-color: #1e293b; color: #f8fafc; padding: 1em; border-radius: 0.5rem; overflow-x: auto;}
+    </style>
+</head>
+<body class="bg-slate-50 h-screen flex flex-col md:flex-row font-sans text-slate-800 selection:bg-teal-200 overflow-hidden">
+
+    <!-- Sidebar / Panel Fitur (Desktop) -->
+    <aside id="sidebar" class="hidden md:flex flex-col w-80 bg-white border-r border-slate-200 h-full overflow-y-auto">
+        <!-- Logo & Header Sidebar -->
+        <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-teal-700 to-teal-800 text-white">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-400 text-teal-900 flex items-center justify-center font-bold text-xl shadow-md">
+                    🌴
+                </div>
+                <div>
+                    <h2 class="font-bold text-lg leading-tight">Menu Nyoman</h2>
+                    <p class="text-teal-200 text-xs">Fitur Pintar Gemini AI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Konten Sidebar -->
+        <div class="p-4 flex flex-col gap-6">
+            <!-- Pilihan Kepribadian -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Pilih Persona Nyoman</label>
+                <div class="grid grid-cols-1 gap-2" id="persona-container">
+                    <button onclick="setPersona('standard')" id="btn-persona-standard" class="persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all bg-teal-50 border-teal-500 text-teal-900 font-medium shadow-sm">
+                        <span class="text-xl">🙏</span>
+                        <div>
+                            <div class="text-sm">Asisten Ramah (Default)</div>
+                            <div class="text-xs text-teal-700/80 font-normal">Sopan, santun, & siap membantu</div>
+                        </div>
+                    </button>
+                    <button onclick="setPersona('guide')" id="btn-persona-guide" class="persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all border-slate-200 hover:bg-slate-50 text-slate-700">
+                        <span class="text-xl">🗺️</span>
+                        <div>
+                            <div class="text-sm">Pemandu Wisata Bali</div>
+                            <div class="text-xs text-slate-500">Ahli rute wisata & budaya lokal</div>
+                        </div>
+                    </button>
+                    <button onclick="setPersona('gaul')" id="btn-persona-gaul" class="persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all border-slate-200 hover:bg-slate-50 text-slate-700">
+                        <span class="text-xl">😎</span>
+                        <div>
+                            <div class="text-sm">Bli Gaul (Casual)</div>
+                            <div class="text-xs text-slate-500">Gaya santai ala anak muda Bali</div>
+                        </div>
+                    </button>
+                    <button onclick="setPersona('wise')" id="btn-persona-wise" class="persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all border-slate-200 hover:bg-slate-50 text-slate-700">
+                        <span class="text-xl">📿</span>
+                        <div>
+                            <div class="text-sm">Tetua Bijak</div>
+                            <div class="text-xs text-slate-500">Penuh filosofi Tri Hita Karana</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Rencana Wisata -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Rencana Wisata Bali</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-3">
+                    <div>
+                        <span class="text-xs text-slate-500 block mb-1">Durasi Liburan:</span>
+                        <select id="itinerary-days" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="1 Hari">1 Hari Saja</option>
+                            <option value="3 Hari">3 Hari 2 Malam</option>
+                            <option value="5 Hari" selected>5 Hari 4 Malam</option>
+                            <option value="7 Hari">Seminggu (7 Hari)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 block mb-1">Gaya Wisata:</span>
+                        <select id="itinerary-style" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="Santai & Pantai" selected>Pantai & Sunset</option>
+                            <option value="Petualangan Alam & Air Terjun">Petualangan Alam</option>
+                            <option value="Seni, Pura, dan Budaya Ubud">Budaya & Seni (Ubud)</option>
+                            <option value="Kuliner & Tempat Hits Seminyak">Kuliner & Tempat Hits</option>
+                        </select>
+                    </div>
+                    <button onclick="generateItinerary()" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-compass"></i> ✨ Susun Rencana
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Penerjemah Kamus Bali -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Kamus Budaya Bali</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <input type="text" id="dictionary-input" placeholder="Contoh: Sugeng rawuh / Subak" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    <button onclick="translateAndExplain()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-sm font-semibold py-2 px-3 rounded-lg shadow transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-language"></i> ✨ Terjemahkan & Jelaskan
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Imagen 4 Lukisan Bali -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Lukis Gambar Bali (AI)</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <textarea id="image-prompt" rows="2" placeholder="Candi bentar saat matahari terbit di Bali..." class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none resize-none"></textarea>
+                    <button onclick="generateBaliImage()" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-3 rounded-lg shadow transition duration-200 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ Lukis Gambar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col h-full relative">
+        <!-- Header -->
+        <header class="bg-teal-700 text-white shadow-md z-10">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <!-- Hamburger button for Mobile Drawer -->
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-white text-xl p-1 hover:bg-teal-800 rounded transition mr-1" title="Menu Fitur">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="w-10 h-10 rounded-full bg-white text-teal-700 flex items-center justify-center font-bold text-xl shadow-inner relative">
+                        🌴
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-teal-700"></span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight flex items-center gap-1.5">
+                            Nyoman AI <span id="current-badge" class="text-[10px] font-normal bg-teal-800 text-teal-200 px-2 py-0.5 rounded-full">Asisten</span>
+                        </h1>
+                        <p class="text-teal-200 text-xs flex items-center gap-1">
+                            Ditenagai Gemini 2.5 Flash
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="w-9 h-9 rounded-full bg-teal-800 hover:bg-teal-900 flex items-center justify-center text-teal-100 hover:text-white transition" onclick="clearChat()" title="Hapus Obrolan">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scroll-smooth" id="chat-container">
+            <!-- Pesan selamat datang akan dirender di sini oleh JS -->
+        </main>
+
+        <!-- Input Area -->
+        <footer class="bg-white border-t border-slate-200 p-3 sm:p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div class="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+                <div class="flex-1 bg-slate-100 rounded-2xl border border-slate-200 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-200 transition-all overflow-hidden flex items-end">
+                    <textarea id="user-input" rows="1" class="w-full bg-transparent border-none focus:ring-0 resize-none p-3 max-h-32 text-sm sm:text-base outline-none" placeholder="Tanyakan apa saja pada Nyoman..."></textarea>
+                </div>
+                <button id="send-btn" class="bg-teal-600 hover:bg-teal-700 text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0 transition-transform transform active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-paper-plane relative -left-0.5"></i>
+                </button>
+            </div>
+            <p class="text-center text-[10px] sm:text-xs text-slate-400 mt-2">Nyoman AI ditenagai Gemini LLM. Gambar ditenagai Imagen 4. Gunakan dengan bijak.</p>
+        </footer>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="hidden fixed inset-0 bg-slate-950/50 z-20 backdrop-blur-sm transition-opacity duration-300"></div>
+
+    <!-- Mobile Sidebar/Drawer -->
+    <div id="mobile-sidebar" class="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-30 transform -translate-x-full transition-transform duration-300 flex flex-col h-full overflow-y-auto">
+        <!-- Header Drawer -->
+        <div class="p-5 border-b border-slate-100 bg-teal-800 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🌴</span>
+                <div>
+                    <h2 class="font-bold text-base leading-none">Fitur Pintar Nyoman</h2>
+                    <p class="text-teal-200 text-[10px] mt-1">Gunakan asisten AI kustom</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileSidebar()" class="text-white hover:text-teal-200 text-xl p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <!-- Konten Drawer (Duplikasi fungsional) -->
+        <div class="p-4 flex flex-col gap-6" id="mobile-sidebar-content">
+            <!-- Pilihan Kepribadian -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Pilih Persona Nyoman</label>
+                <div class="grid grid-cols-1 gap-2" id="mobile-persona-container">
+                    <!-- Akan diisi otomatis oleh JS agar sinkron -->
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Rencana Wisata -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Rencana Wisata Bali</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-3">
+                    <div>
+                        <span class="text-xs text-slate-500 block mb-1">Durasi Liburan:</span>
+                        <select id="mobile-itinerary-days" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="1 Hari">1 Hari Saja</option>
+                            <option value="3 Hari">3 Hari 2 Malam</option>
+                            <option value="5 Hari" selected>5 Hari 4 Malam</option>
+                            <option value="7 Hari">Seminggu (7 Hari)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 block mb-1">Gaya Wisata:</span>
+                        <select id="mobile-itinerary-style" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="Santai & Pantai" selected>Pantai & Sunset</option>
+                            <option value="Petualangan Alam & Air Terjun">Petualangan Alam</option>
+                            <option value="Seni, Pura, dan Budaya Ubud">Budaya & Seni (Ubud)</option>
+                            <option value="Kuliner & Tempat Hits Seminyak">Kuliner & Tempat Hits</option>
+                        </select>
+                    </div>
+                    <button onclick="generateItinerary(true)" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium py-2 px-3 rounded-lg shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-compass"></i> ✨ Susun Rencana
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Penerjemah Kamus Bali -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Kamus Budaya Bali</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <input type="text" id="mobile-dictionary-input" placeholder="Contoh: Sugeng rawuh / Subak" class="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    <button onclick="translateAndExplain(true)" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-sm font-semibold py-2 px-3 rounded-lg shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-language"></i> ✨ Terjemahkan & Jelaskan
+                    </button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Imagen 4 Lukisan Bali -->
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">✨ Lukis Gambar Bali (AI)</label>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
+                    <textarea id="mobile-image-prompt" rows="2" placeholder="Candi bentar saat matahari terbit di Bali..." class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none resize-none"></textarea>
+                    <button onclick="generateBaliImage(true)" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-3 rounded-lg shadow flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ Lukis Gambar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal untuk Notifikasi / Error -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-slate-950/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 animate-scale-up">
+            <div id="modal-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 bg-amber-100 text-amber-600">
+                ⚠️
+            </div>
+            <h3 id="modal-title" class="text-lg font-bold text-slate-900 text-center mb-2">Notifikasi</h3>
+            <p id="modal-message" class="text-sm text-slate-600 text-center mb-6">Pesan detail diletakkan di sini.</p>
+            <button onclick="closeModal()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-xl transition duration-200">
+                Oke, Mengerti
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const currentBadge = document.getElementById('current-badge');
+        
+        // Konfigurasi API - API Key di-inject dinamis oleh platform
+        const apiKey = "AIzaSyAj2cgtN7MXad544jB4NXaTsLNPDZbkHRk"; 
+        
+        // Model Endpoint yang Diizinkan (Gemini 2.5 Flash Preview)
+        const textModelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
+        // Model Endpoint untuk Gambar (Imagen 4)
+        const imageModelUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+
+        // Definisi Persona & Instruksi Sistem
+        const personas = {
+            standard: {
+                badge: "Asisten",
+                emoji: "🙏",
+                instruction: `Kamu adalah "Nyoman AI", asisten virtual yang cerdas, sangat ramah, dan penuh tata krama dari Bali, Indonesia. 
+Gunakan Bahasa Indonesia yang baik, santun, tapi tetap ramah dan hangat. 
+Seringlah menyapa menggunakan sapaan sopan Indonesia atau sesekali gunakan salam Bali "Om Swastiastu" di awal sesi, dan "Suksma" (terima kasih) di akhir kalimat jika sesuai konteks. 
+Berikan respon ringkas dan gunakan format Markdown seperti list, bold, atau tabel agar mudah dibaca.`
+            },
+            guide: {
+                badge: "Pemandu Wisata",
+                emoji: "🗺️",
+                instruction: `Kamu adalah "Bli Nyoman", pemandu wisata profesional berlisensi di Bali. 
+Fokus utamamu adalah membantu pengguna merencanakan perjalanan mereka ke Bali, memberikan rekomendasi destinasi terbaik (pantai tersembunyi, air terjun, pura bersejarah, dll), menyarankan kuliner khas Bali (halal & non-halal dengan penjelasannya), serta membagikan tips penting agar liburan aman dan menyenangkan. 
+Bicaralah dengan penuh antusiasme, ramah, gunakan kata-kata seperti "Semeton" (saudara) atau "Bli" untuk dirimu sendiri, serta berikan detail rute dan estimasi biaya jika memungkinkan.`
+            },
+            gaul: {
+                badge: "Bli Gaul",
+                emoji: "😎",
+                instruction: `Kamu adalah "Nyoman", pemuda lokal Bali yang gaul, kekinian, santai, namun tetap helpful. 
+Bicaralah menggunakan gaya kasual anak muda Indonesia yang dicampur dengan logat atau slang lokal Bali (seperti "Bli", "Saje", "Nyen", "Mih", "Kenken kabare", "Gak usah baper", dll). 
+Gaya tulisanmu santai, seru, bersahabat, menggunakan emoji santai. Kamu suka merekomendasikan tempat nongkrong hits, kafe estetik, beach club, atau rute motoran seru di Bali.`
+            },
+            wise: {
+                badge: "Tetua Bijak",
+                emoji: "📿",
+                instruction: `Kamu adalah "Jero Nyoman", tetua adat spiritual dari Bali yang bijaksana dan tenang. 
+Bicaralah dengan gaya bahasa yang penuh sastra, mendalam, damai, dan menyejukkan jiwa. 
+Gunakan kearifan lokal Bali seperti filosofi "Tri Hita Karana" (hubungan harmonis manusia dengan Tuhan, sesama manusia, dan alam), "Tat Twam Asi" (Aku adalah kamu, kamu adalah aku), serta karma phala untuk menjawab dilema hidup atau pertanyaan moral dari pengguna.`
+            }
+        };
+
+        let activePersona = 'standard';
+        let chatHistory = [];
+        let isGenerating = false;
+
+        // Auto-synchronize kepribadian ke Mobile Drawer
+        function syncMobilePersonaOptions() {
+            const mobileContainer = document.getElementById('mobile-persona-container');
+            mobileContainer.innerHTML = '';
+            
+            Object.keys(personas).forEach(key => {
+                const pers = personas[key];
+                const isActive = key === activePersona;
+                const activeClass = isActive ? 'bg-teal-50 border-teal-500 text-teal-900 font-medium shadow-sm' : 'border-slate-200 hover:bg-slate-50 text-slate-700';
+                
+                const btn = document.createElement('button');
+                btn.className = `mobile-persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${activeClass}`;
+                btn.onclick = () => {
+                    setPersona(key);
+                    toggleMobileSidebar();
+                };
+                btn.innerHTML = `
+                    <span class="text-xl">${pers.emoji}</span>
+                    <div>
+                        <div class="text-sm">${pers.badge === 'Asisten' ? 'Asisten Ramah (Default)' : pers.badge}</div>
+                    </div>
+                `;
+                mobileContainer.appendChild(btn);
+            });
+        }
+
+        // Ubah Persona Terpilih
+        function setPersona(personaKey) {
+            if (isGenerating) return;
+            activePersona = personaKey;
+            
+            // Update lencana di Header
+            const current = personas[activePersona];
+            currentBadge.textContent = current.badge;
+            currentBadge.className = `text-[10px] font-normal px-2 py-0.5 rounded-full ${
+                activePersona === 'standard' ? 'bg-teal-800 text-teal-200' :
+                activePersona === 'guide' ? 'bg-amber-500 text-slate-950 font-medium' :
+                activePersona === 'gaul' ? 'bg-indigo-600 text-indigo-100' :
+                'bg-emerald-600 text-emerald-100'
+            }`;
+
+            // Update status tombol sidebar desktop
+            document.querySelectorAll('.persona-btn').forEach(btn => {
+                btn.className = "persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all border-slate-200 hover:bg-slate-50 text-slate-700";
+            });
+            const activeBtn = document.getElementById(`btn-persona-${personaKey}`);
+            if (activeBtn) {
+                activeBtn.className = "persona-btn flex items-center gap-3 p-3 rounded-xl border text-left transition-all bg-teal-50 border-teal-500 text-teal-900 font-medium shadow-sm";
+            }
+
+            // Sync ke mobile
+            syncMobilePersonaOptions();
+
+            // Sapa pengguna ulang menggunakan persona baru
+            chatContainer.innerHTML = '';
+            chatHistory = [];
+            
+            let sapaan = "";
+            if (personaKey === 'standard') {
+                sapaan = "Om Swastiastu! Saya **Nyoman AI**. Ada yang bisa saya bantu hari ini?";
+            } else if (personaKey === 'guide') {
+                sapaan = "Halo Semeton! Saya **Bli Nyoman**, *guide* lokal Bali kamu. Siap mencari petualangan, pantai eksotis, atau pura terindah? Yuk, sebutkan rencana liburanmu!";
+            } else if (personaKey === 'gaul') {
+                sapaan = "Wih, kenken kabare bro! Gue **Nyoman**. Mau cari info beach club paling kece, spot sunset tersembunyi, atau tempat makan hits murah meriah di Bali? Tanyain aja, santai!";
+            } else if (personaKey === 'wise') {
+                sapaan = "Om Swastiastu. Semoga kedamaian selalu menyertai langkahmu. Saya **Jero Nyoman**. Jika ada keraguan di dalam hati, atau keingintahuan akan kearifan jagat Bali, silakan utarakan.";
+            }
+
+            const rawHtml = marked.parse(sapaan);
+            const cleanHtml = DOMPurify.sanitize(rawHtml);
+            chatContainer.appendChild(createMessageElement(cleanHtml, 'nyoman', true));
+            
+            chatHistory.push({
+                role: "model",
+                parts: [{ text: sapaan }]
+            });
+        }
+
+        // Tampilkan Custom Dialog Modal pengganti window.alert
+        function showModal(title, message, isError = false) {
+            const modal = document.getElementById('custom-modal');
+            const icon = document.getElementById('modal-icon');
+            const titleEl = document.getElementById('modal-title');
+            const messageEl = document.getElementById('modal-message');
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            if (isError) {
+                icon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                icon.className = "w-12 h-12 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 bg-red-100 text-red-600";
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+                icon.className = "w-12 h-12 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 bg-teal-100 text-teal-600";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        // Toggle mobile drawer
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                syncMobilePersonaOptions();
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Rancang Itinerary Otomatis (Gemini Call)
+        async function generateItinerary(isMobile = false) {
+            if (isGenerating) return;
+            
+            const daysSelect = document.getElementById(isMobile ? 'mobile-itinerary-days' : 'itinerary-days');
+            const styleSelect = document.getElementById(isMobile ? 'mobile-itinerary-style' : 'itinerary-style');
+            
+            const days = daysSelect.value;
+            const style = styleSelect.value;
+
+            if (isMobile) toggleMobileSidebar();
+
+            const promptText = `Tolong buatkan detail rencana perjalanan (itinerary) liburan ke Bali selama **${days}** dengan gaya wisata **${style}**. Berikan rekomendasi rute, destinasi harian yang searah agar efisien, tips kuliner khas di area tersebut, dan estimasi waktu terbaik untuk berkunjung. Kemas jawaban dengan format Markdown yang sangat rapi dan mudah dibaca.`;
+            
+            userInput.value = promptText;
+            handleSend();
+        }
+
+        // Kamus & Budaya Bali (Gemini Call)
+        async function translateAndExplain(isMobile = false) {
+            if (isGenerating) return;
+            
+            const inputEl = document.getElementById(isMobile ? 'mobile-dictionary-input' : 'dictionary-input');
+            const phrase = inputEl.value.trim();
+
+            if (!phrase) {
+                showModal("Input Kosong", "Silakan masukkan kata atau istilah budaya Bali terlebih dahulu ya!", true);
+                return;
+            }
+
+            if (isMobile) toggleMobileSidebar();
+            inputEl.value = '';
+
+            const promptText = `Artikan kata/kalimat/istilah berikut ke dalam bahasa Bali (atau sebaliknya jika itu bahasa Bali), sebutkan tingkatannya (Alus, Madya, Kasar) bila relevan, dan berikan penjelasan mendalam mengenai arti budaya atau makna filosofisnya: **"${phrase}"**.`;
+            
+            userInput.value = promptText;
+            handleSend();
+        }
+
+        // Melukis Gambar Bali menggunakan Imagen 4
+        async function generateBaliImage(isMobile = false) {
+            if (isGenerating) return;
+
+            const promptInput = document.getElementById(isMobile ? 'mobile-image-prompt' : 'image-prompt');
+            const textPrompt = promptInput.value.trim();
+
+            if (!textPrompt) {
+                showModal("Butuh Deskripsi", "Tolong tuliskan deskripsi lukisan Bali yang ingin Anda buat!", true);
+                return;
+            }
+
+            if (isMobile) toggleMobileSidebar();
+            promptInput.value = '';
+
+            // Tampilkan UI Loading di obrolan
+            isGenerating = true;
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+            
+            // Buat pesan pengguna buatan
+            chatContainer.appendChild(createMessageElement(`Melukis pemandangan: "${textPrompt}"...`, 'user'));
+            scrollToBottom();
+
+            showTypingIndicator();
+
+            try {
+                // Gunakan model Imagen 4 sesuai petunjuk teknis platform
+                const payload = {
+                    instances: { prompt: `Beautiful artistic digital art of: ${textPrompt}, high-quality Bali atmosphere` },
+                    parameters: { sampleCount: 1 }
+                };
+
+                const response = await fetchWithRetry(imageModelUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Gagal memanggil API Imagen.");
+                }
+
+                const result = await response.json();
+                hideTypingIndicator();
+
+                if (result.predictions && result.predictions[0] && result.predictions[0].bytesBase64Encoded) {
+                    const base64Data = result.predictions[0].bytesBase64Encoded;
+                    const imageUrl = `data:image/png;base64,${base64Data}`;
+
+                    // Tampilkan gambar di dalam obrolan
+                    const imageCard = document.createElement('div');
+                    imageCard.className = "flex w-full justify-start animate-fade-in-up";
+                    imageCard.innerHTML = `
+                        <div class="max-w-[85%] sm:max-w-[70%] rounded-2xl bg-white border border-slate-200 p-3 shadow-md">
+                            <p class="text-xs text-slate-400 mb-2 flex items-center gap-1">
+                                <i class="fa-solid fa-palette text-purple-500"></i> Hasil Lukisan Nyoman (Imagen 4)
+                            </p>
+                            <img src="${imageUrl}" alt="${textPrompt}" class="rounded-lg w-full h-auto object-cover border border-slate-100 shadow-inner mb-3">
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-xs text-slate-600 font-medium truncate">${textPrompt}</span>
+                                <a href="${imageUrl}" download="lukisan-nyoman-ai.png" class="text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium px-2.5 py-1 rounded-md flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-download"></i> Simpan
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    chatContainer.appendChild(imageCard);
+                } else {
+                    throw new Error("Format output gambar tidak dikenal.");
+                }
+
+            } catch (error) {
+                hideTypingIndicator();
+                console.error("Imagen error:", error);
+                const errCard = createMessageElement("Maaf, Nyoman gagal melukis gambar ini karena batasan sistem atau masalah koneksi. Tolong coba dengan deskripsi lain ya! 🎨", 'nyoman', false);
+                chatContainer.appendChild(errCard);
+            } finally {
+                isGenerating = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                scrollToBottom();
+            }
+        }
+
+        // Exponential backoff fetch helper (5 Retries: 1s, 2s, 4s, 8s, 16s)
+        async function fetchWithRetry(url, options, retries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return response;
+                    
+                    const errorMsg = await response.text();
+                    throw new Error(`HTTP Error Status: ${response.status}. Detail: ${errorMsg}`);
+                } catch (error) {
+                    if (i === retries - 1) throw error; // Re-throw error pada percobaan terakhir
+                    const delayTime = delays[i] || 16000;
+                    await new Promise(resolve => setTimeout(resolve, delayTime));
+                }
+            }
+        }
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if(this.value.trim() === '') {
+                this.style.height = 'auto';
+            }
+        });
+
+        // Handle Enter key (Shift+Enter untuk baris baru, Enter untuk kirim)
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        sendBtn.addEventListener('click', handleSend);
+
+        function createMessageElement(text, sender, isHtml = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 sm:py-3 shadow-sm ${
+                sender === 'user' 
+                ? 'bg-teal-600 text-white rounded-br-none' 
+                : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'
+            }`;
+
+            if (sender === 'nyoman') {
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'prose prose-sm sm:prose-base prose-teal max-w-none';
+                if (isHtml) {
+                    contentDiv.innerHTML = text;
+                } else {
+                    contentDiv.textContent = text;
+                }
+                bubble.appendChild(contentDiv);
+            } else {
+                bubble.textContent = text;
+            }
+
+            wrapper.appendChild(bubble);
+            return wrapper;
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function showTypingIndicator() {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'typing-indicator';
+            wrapper.className = `flex w-full justify-start animate-fade-in-up`;
+            
+            wrapper.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10">
+                    <div class="typing-dot w-2 h-2 bg-teal-400 rounded-full"></div>
+                    <div class="typing-dot w-2 h-2 bg-teal-400 rounded-full"></div>
+                    <div class="typing-dot w-2 h-2 bg-teal-400 rounded-full"></div>
+                </div>
+            `;
+            chatContainer.appendChild(wrapper);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text || isGenerating) return;
+
+            // Set state loading
+            isGenerating = true;
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+            
+            // Render user message
+            chatContainer.appendChild(createMessageElement(text, 'user'));
+            scrollToBottom();
+
+            // Masukkan ke log percakapan
+            chatHistory.push({
+                role: "user",
+                parts: [{ text: text }]
+            });
+
+            showTypingIndicator();
+
+            // Ambil System Instruction dari Persona yang sedang aktif
+            const systemInstructionText = personas[activePersona].instruction;
+
+            const payload = {
+                systemInstruction: {
+                    parts: [{ text: systemInstructionText }]
+                },
+                contents: chatHistory
+            };
+
+            try {
+                const response = await fetchWithRetry(textModelUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                hideTypingIndicator();
+
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content) {
+                    const responseText = result.candidates[0].content.parts[0].text;
+                    
+                    // Simpan respon ke riwayat
+                    chatHistory.push({
+                        role: "model",
+                        parts: [{ text: responseText }]
+                    });
+
+                    // Parse Markdown & Sanitize
+                    const rawHtml = marked.parse(responseText);
+                    const cleanHtml = DOMPurify.sanitize(rawHtml);
+
+                    chatContainer.appendChild(createMessageElement(cleanHtml, 'nyoman', true));
+                } else {
+                    throw new Error("Gagal memperoleh respons yang valid.");
+                }
+
+            } catch (error) {
+                hideTypingIndicator();
+                console.error("Gemini API Error:", error);
+                
+                // Hapus chat terakhir dari riwayat agar percakapan tidak menyimpang
+                chatHistory.pop();
+                
+                const errorMsg = "Aduh semeton, sepertinya jaringan Nyoman sedang terganggu. Boleh tolong dicoba kembali sebentar lagi? 🙏";
+                chatContainer.appendChild(createMessageElement(errorMsg, 'nyoman', false));
+            } finally {
+                isGenerating = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+                scrollToBottom();
+            }
+        }
+
+        function clearChat() {
+            chatContainer.innerHTML = '';
+            chatHistory = [];
+            setPersona(activePersona);
+        }
+
+        // Tampilkan sambutan awal saat pertama dimuat
+        window.onload = () => {
+            setPersona('standard');
+            userInput.focus();
+        };
+
+        // Inject animasi CSS untuk kelancaran antarmuka
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes scaleUp {
+                from { opacity: 0; transform: scale(0.95); }
+                to { opacity: 1; transform: scale(1); }
+            }
+            .animate-fade-in-up {
+                animation: fadeInUp 0.3s ease-out forwards;
+            }
+            .animate-scale-up {
+                animation: scaleUp 0.2s ease-out forwards;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
